@@ -18,6 +18,18 @@ df$Zip_Code <- gsub(df$Zip_Code, pattern="-.*", replacement = "")
 # remove leading zero on zip codes to match other data set
 df$Zip_Code <- gsub(df$Zip_Code, pattern="^0", replacement = "")
 
+#Relabel the restaurant columns
+df$Restaurant <- gsub(df$Restaurant, pattern="^m", replacement = "McDonalds")
+df$Restaurant <- gsub(df$Restaurant, pattern="^b", replacement = "Burger King")
+df$Restaurant <- gsub(df$Restaurant, pattern="^p", replacement = "Pizza Hut")
+df$Restaurant <- gsub(df$Restaurant, pattern="^t", replacement = "Taco Bell")
+df$Restaurant <- gsub(df$Restaurant, pattern="^w", replacement = "Wendys")
+df$Restaurant <- gsub(df$Restaurant, pattern="^j", replacement = "Jack In The Box")
+df$Restaurant <- gsub(df$Restaurant, pattern="^h", replacement = "Hardees")
+df$Restaurant <- gsub(df$Restaurant, pattern="^c", replacement = "Carls Jr")
+df$Restaurant <- gsub(df$Restaurant, pattern="^i", replacement = "In-N-Out")
+df$Restaurant <- gsub(df$Restaurant, pattern="^k", replacement = "KFC")
+
 # Get rid of special characters in each column.
 # Google ASCII Table to understand the following:
 for(n in names(df)) {
