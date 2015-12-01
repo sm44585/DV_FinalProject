@@ -14,9 +14,9 @@ measures <- c("Row_num", "Longnitude", "Lat")
 
 
 # Make Zip codes all five digits
-df$Zip <- gsub(df$Zip, pattern="-.*", replacement = "")
+df$Zip_Code <- gsub(df$Zip_Code, pattern="-.*", replacement = "")
 # remove leading zero on zip codes to match other data set
-df$Zip <- gsub(df$Zip, pattern="^0", replacement = "")
+df$Zip_Code <- gsub(df$Zip_Code, pattern="^0", replacement = "")
 
 # Get rid of special characters in each column.
 # Google ASCII Table to understand the following:
