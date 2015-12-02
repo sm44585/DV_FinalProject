@@ -31,25 +31,4 @@ ggplot() +
         geom="bar",
         geom_params=list(colour="blue", fill="white"), 
         position=position_dodge()
-  ) + coord_flip() + 
-  layer(data=bar_chart, 
-        mapping=aes(x=STATE, y=value.x, label=round(value.x, 2)), 
-        stat="identity", 
-        stat_params=list(), 
-        geom="text",
-        geom_params=list(colour="black", hjust=2), 
-        position=position_identity()
-  ) +
-  layer(data=bar_chart, 
-        mapping=aes(yintercept = value.y), 
-        geom="hline",
-        geom_params=list(colour="red")
-  ) +
-  layer(data=bar_chart, 
-        mapping=aes(x=STATE, y=value.x, label=round(value.y, 2)), 
-        stat="identity", 
-        stat_params=list(), 
-        geom="text",
-        geom_params=list(colour="black", hjust=0), 
-        position=position_identity()
-  )
+  ) + coord_flip() 
