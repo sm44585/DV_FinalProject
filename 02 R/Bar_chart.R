@@ -13,7 +13,7 @@ fastfood_sale <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:500
 
 join_data<-dplyr::inner_join(fast_food, fastfood_sale, by="RESTAURANT") 
 
-bar_chart <- join_data %>% select(STATE, RESTAURANT, SALES) %>% subset(STATE%in% c("AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"))%>%subset(RESTAURANT%in% c("McDonalds", "Burger King"))%>%group_by(STATE,RESTAURANT) %>% summarise(sum_sales = sum(as.numeric(SALES))) %>%melt(id.vars = c("STATE","RESTAURANT")) %>%group_by(variable)  
+bar_chart <- join_data %>% select(STATE, RESTAURANT, SALES) %>% subset(STATE%in% c("AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"))%>%subset(RESTAURANT%in% c("McDonalds", "Burger King", "Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"))%>%group_by(STATE,RESTAURANT) %>% summarise(sum_sales = sum(as.numeric(SALES))) %>%melt(id.vars = c("STATE","RESTAURANT")) %>%group_by(variable)  
 window_avg = aggregate(bar_chart[, 4], list(STATE=bar_chart$STATE), mean)
 bar_chart<-dplyr::inner_join(bar_chart, window_avg, by="STATE") 
 #Plot Function to generate bar chart with reference line and values

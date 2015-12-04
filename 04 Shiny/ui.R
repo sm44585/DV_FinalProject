@@ -34,30 +34,20 @@ dashboardPage(
               actionButton("Market_Share", "Generate Market Share Crosstab Plot"),
               plotOutput("crosstabPlot", width="100%", height=800)
       ),
-    tabItem(tabName = "PV4_Crosstab",
-            sliderInput("PV4_KPILow", 
-                        "Maximum Low Value for PV4 KPI:", 
-                        min = 0,
-                        max = 1, 
-                        value = 1),
-            #Slider for PV4 KPI2
-            sliderInput("PV4_KPIHigh", 
-                        "Maximum Medium Value for PV2 KPI:", 
-                        min = 1,
-                        max = 2, 
-                        value = 2),
-            actionButton("PV4Plot", "Generate PV4 Crosstab Plot"),
-            plotOutput("crosstabPV4Plot")
+    tabItem(tabName = "Bar_Chart",
+            checkboxGroupInput(inputId = "RESTAURANT",
+                                label ="Fast Food Restaurants:",
+                                choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "McDonalds", inline = TRUE
+            ),
+            checkboxGroupInput(inputId = "STATE",
+                               label ="States:",
+                               choices = c("All", "AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"), selected = "All", inline = TRUE
+            ),
+            #action button to generate bar chart plot
+            actionButton("BarPlot", "Generate Bar Plot"),
+            plotOutput("barchartPlot", width="100%", height=1200)
             )
-#     tabItem(tabName = "Bar_Chart",
-#             checkboxGroupInput(inputId = "TRANY",
-#                                 label ="Transmission:",
-#                                 choices = c("All", "Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd"), selected = "All", inline = TRUE
-#             ),
-#             #action button to generate bar chart plot
-#             actionButton("BarPlot", "Generate Bar Plot"),
-#             plotOutput("barchartPlot")
-#             ),
+            
 #     tabItem(tabName = "Scatterplot",
 #             p("Note: if beginning year is greater than end year, the chart defaults to displaying all model years."),
 #             #data range slider for each year

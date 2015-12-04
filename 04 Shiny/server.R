@@ -23,15 +23,25 @@ shinyServer(function(input, output) {
     zip_code$MEAN <- as.numeric(levels(zip_code$MEAN))[zip_code$MEAN]
   }, ignoreNULL = FALSE)
   
-#   #Code that generates reactive transmission filter for the bar chart.
-#   trans_filter <- eventReactive(c(input$refreshAll, input$BarPlot), {
-#     if (input$TRANY == "All"){
-#       trans_filter = c("Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd")
-#     }
-#     else {
-#       trans_filter = input$TRANY
-#     }
-#     }, ignoreNULL = FALSE)
+  #Code that generates reactive restaurant filter for the bar chart.
+  filter_restaurant <- eventReactive(c(input$refreshAll, input$BarPlot), {
+    if (input$RESTAURANT == "All"){
+      filter_restaurant = c("McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC")
+    }
+    else {
+      filter_restaurant = input$RESTAURANT
+    }
+    }, ignoreNULL = FALSE)
+  
+  #Code that generates reactive state filter for the bar chart.
+  filter_state <- eventReactive(c(input$refreshAll, input$BarPlot), {
+    if (input$STATE == "All"){
+      filter_state = c("AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY")
+    }
+    else {
+      filter_state = input$STATE
+    }
+  }, ignoreNULL = FALSE)
 #   
 #   #Code that generate reactive year selector for the scatter plot.
 #   year_range <- eventReactive(c(input$refreshAll, input$ScatterPlot), {
@@ -84,82 +94,53 @@ shinyServer(function(input, output) {
     return(plot)
   })
   
-#   #Code to generate PV4 Crosstab plot
-#   output$crosstabPV4Plot <- renderPlot({
-#     crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
-#     
-#     # This line turns the make and year columns into ordered factors.
-#     crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
-#     
-#     #This generates the PV4 with combined MPG plot
-#     plot <-ggplot() +
-#       coord_cartesian() + 
-#       scale_x_discrete() +
-#       scale_y_discrete() +
-#       labs(title='Vehicle Crosstab of Efficiency/Space ratio for 4 door cars') +
-#       labs(x=paste("Make"), y=paste("Year")) +
-#       layer(data=crosstab, 
-#             mapping=aes(x=MAKE, y=YEAR, label=round(ratio_2, 2)), 
-#             stat="identity", 
-#             stat_params=list(), 
-#             geom="text",
-#             geom_params=list(colour="black"), 
-#             position=position_identity()
-#       ) +
-#       layer(data=crosstab, 
-#             mapping=aes(x=MAKE, y=YEAR, fill=kpi_2), 
-#             stat="identity", 
-#             stat_params=list(), 
-#             geom="tile",
-#             geom_params=list(alpha=0.50), 
-#             position=position_identity()
-#       ) 
-#     # End your code here.
-#     return(plot)
-#   })
-#   
-#   #Code to generate Bar Chart Plot
-#   output$barchartPlot <- renderPlot({
-#     bar_chart <- vehicles() %>% select(TRANY, HIGHWAY08, CITY08) %>% subset(TRANY %in% trans_filter()) %>% group_by(TRANY) %>% summarise(avg_city_MPG = mean(CITY08), avg_highway_MPG = mean(HIGHWAY08)) %>% melt(id.vars = c("TRANY")) %>% group_by(variable) %>% mutate(WINDOW_AVG_MPG = mean(value))
-#       #Plot Function to generate bar chart with reference line and values
-#       plot <- ggplot() + 
-#       coord_cartesian() + 
-#       scale_x_discrete() +
-#       scale_y_continuous() +
-#       facet_wrap(~variable) +
-#       labs(title='Average Highway and City MPG based on transmission ') +
-#       labs(x=paste("Transmission"), y=paste("MPG")) +
-#       layer(data=bar_chart, 
-#             mapping=aes(x=TRANY, y=value), 
-#             stat="identity", 
-#             stat_params=list(), 
-#             geom="bar",
-#             geom_params=list(colour="blue", fill="white"), 
-#             position=position_dodge()
-#       ) + coord_flip() + 
-#       layer(data=bar_chart, 
-#             mapping=aes(x=TRANY, y=value, label=round(WINDOW_AVG_MPG, 2)), 
-#             stat="identity", 
-#             stat_params=list(), 
-#             geom="text",
-#             geom_params=list(colour="black", hjust=2), 
-#             position=position_identity()
-#       ) +
-#       layer(data=bar_chart, 
-#             mapping=aes(yintercept = WINDOW_AVG_MPG), 
-#             geom="hline",
-#             geom_params=list(colour="red")
-#       ) +
-#       layer(data=bar_chart, 
-#             mapping=aes(x=TRANY, y=value, label=round(value, 2)), 
-#             stat="identity", 
-#             stat_params=list(), 
-#             geom="text",
-#             geom_params=list(colour="black", hjust=0), 
-#             position=position_identity()
-#       )
-#     return(plot)
-#   })
+  #Code to generate Bar Chart Plot
+  output$barchartPlot <- renderPlot({
+    join_data<-dplyr::inner_join(fast_food(), fast_food_sales(), by="RESTAURANT")
+    bar_chart <- join_data %>% select(STATE, RESTAURANT, SALES) %>% subset(STATE%in% filter_state())%>%subset(RESTAURANT%in% filter_restaurant())%>%group_by(STATE,RESTAURANT) %>% summarise(sum_sales = sum(as.numeric(SALES)))%>%melt(id.vars = c("STATE","RESTAURANT"))%>%group_by(variable)%>%group_by(STATE)%>%group_by(STATE)
+    WINDOW_AVG=aggregate(bar_chart[, 4], list(RESTAURANT=bar_chart$RESTAURANT), mean)
+    bar_chart<-dplyr::right_join(bar_chart, WINDOW_AVG, by="RESTAURANT")
+    bar_chart<-bar_chart %>% select (STATE,RESTAURANT,variable,value.x,value.y)%>%mutate(Diff_To_Avg = value.x - value.y)
+    options(scipen = 999)
+      #Plot Function to generate bar chart with reference line and values
+      plot <- ggplot() + 
+        coord_cartesian() + 
+        scale_x_discrete() +
+        scale_y_continuous() +
+        facet_wrap(~RESTAURANT, ncol= 2) +
+        labs(title='Total sales of every fastfood restaurant in every state ') +
+        labs(x=paste("State"), y=paste("Sales")) +
+        layer(data=bar_chart, 
+              mapping=aes(x=STATE, y=value.x), 
+              stat="identity", 
+              stat_params=list(), 
+              geom="bar",
+              geom_params=list(colour="blue", fill="white"), 
+              position=position_dodge()
+        ) + coord_flip() +
+        layer(data=bar_chart, 
+              mapping=aes(x=STATE, y=value.x, label=round(value.x, 2)), 
+              stat="identity", 
+              stat_params=list(), 
+              geom="text",
+              geom_params=list(colour="black", hjust=0), 
+              position=position_identity()
+        )+
+        layer(data=bar_chart, 
+              mapping=aes(yintercept = value.y), 
+              geom="hline",
+              geom_params=list(colour="red")
+        )+
+        layer(data=bar_chart, 
+              mapping=aes(x=STATE, y=value.x, label=round(Diff_To_Avg, 2)), 
+              stat="identity", 
+              stat_params=list(), 
+              geom="text",
+              geom_params=list(colour="black", hjust=-3), 
+              position=position_identity()
+        )
+    return(plot)
+  })
 #   
 #   #Code to generate the scatter plot
 #   output$ScatterPlot <- renderPlot({
