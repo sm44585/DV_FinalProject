@@ -1,0 +1,316 @@
+---
+title: "FinalProject"
+author: "Spencer Muncey and Chenchao Zang and Patricia O'Brien"
+date: "December 7, 2015"
+output: html_document
+---
+# What happens when you join Fast Food Restaurant Location data, Zip code data and Restaurant Sales rank data?
+For this project, we joined three datasets to produce our plots. They are Fast Food map dataset, Zip code dataset and Fastfood Sales rank dataset which is made by ourselves. There are an endless list of fields that one could join on, like dates, gender, state, and so on. First, we decide to join Fast Food map dataset and Zip code dataset based on the common zip code field. Second, we decide to join Fast Food map dataset and Restaurant Sales rank data based on the restaurant name. By using these joined date, we want to look at the market share for each restaurant, the contribution of every state to the total sale of each restaurant, the relationship between the population and the number of total restaurant by zip code.
+
+## Fast Food map dataset
+The first dataset comes from [Fast Food Maps](http://www.fastfoodmaps.com/data.html), a website created to show all restaruant locations of the top ten fast food chains in America. The data is from the summer of 2007. Here is a summary of that dataset:
+
+```{r}
+require("jsonlite")
+require("RCurl")
+# Loads the data from Fast Food table into Fast Food dataframe
+# Change the USER and PASS below to be your UTEid
+fast_food <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from FASTFOODMAPS_LOCATIONS_2007"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
+summary(fast_food)
+head(fast_food)
+```
+
+### Fast Food dataset Extract, Transform, Load (ETL) script
+Here is the script we used to extract, transform, and load the fast food dataset into Oracle:
+```
+#Before running this R file make sure you set you working directory to where the CSV file located.
+
+file_path <- "fastfoodmaps_locations_2007.csv"
+
+df <- read.csv(file_path, stringsAsFactors = FALSE)
+
+# Replace "." (i.e., period) with "_" in the column names.
+names(df) <- gsub("\\.+", "_", names(df))
+
+str(df) # Uncomment this and  run just the lines to here to get column types to use for getting the list of measures.
+
+# Generate List of Measures
+measures <- c("Row_num", "Longnitude", "Lat")
+
+
+# Make Zip codes all five digits
+df$Zip <- gsub(df$Zip, pattern="-.*", replacement = "")
+# remove leading zero on zip codes to match other data set
+df$Zip <- gsub(df$Zip, pattern="^0", replacement = "")
+
+# Get rid of special characters in each column.
+# Google ASCII Table to understand the following:
+for(n in names(df)) {
+  df[n] <- data.frame(lapply(df[n], gsub, pattern="[^ -~]",replacement= ""))
+}
+
+dimensions <- setdiff(names(df), measures)
+
+#dimensions
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    # Get rid of " and ' in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="[\"']",replacement= ""))
+    # Change & to and in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="&",replacement= " and "))
+    # Change : to ; in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern=":",replacement= ";"))
+  }
+}
+
+
+# Get rid of all characters in measures except for numbers, the - sign, and period.dimensions
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    df[m] <- data.frame(lapply(df[m], gsub, pattern="[^--.0-9]",replacement= ""))
+  }
+}
+
+write.csv(df, paste(gsub(".csv", "", file_path), ".reformatted.csv", sep=""), row.names=FALSE, na = "")
+
+tableName <- gsub(" +", "_", gsub("[^A-z, 0-9, ]", "", gsub(".csv", "", file_path)))
+sql <- paste("CREATE TABLE", tableName, "(\n-- Change table_name to the table name you want.\n")
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    sql <- paste(sql, paste(d, "varchar2(4000),\n"))
+  }
+}
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    if(m != tail(measures, n=1)) sql <- paste(sql, paste(m, "number(38,4),\n"))
+    else sql <- paste(sql, paste(m, "number(38,4)\n"))
+  }
+}
+sql <- paste(sql, ");")
+cat(sql)
+```
+
+### A detailed explanation of each column in the fast food location data set:  
+
+* RESTAURANT - First character of fast food restaurant name (b = Burger King, M = Mcdonald's, etc)
+* ADDRESS - Fast food restaurant's address
+* CITY - The city that the fast food restaurant is located in
+* STATE - The state that the fast food restaurant is located in
+* ZIP - Zip code for that specific fast food restaurant
+* PHONE - Phone number for each fast food restaurant
+* ROW_NUM - Record number 
+* LONGNITUDE - GPS Longitude location
+* LAT - GPS latitude location
+
+## Zip code dataset
+The second dataset comes from the University of Michigan's [Population Studies Center](http://www.psc.isr.umich.edu/dis/census/Features/tract2zip/). The dataset originally came from the 2010 [American Community Survey](http://www.census.gov/programs-surveys/acs/about.html) and the Center stripped out all of the columns except ZIP, POP, MEAN, and MEDIAN salaries. Here is a summary of that dataset:
+You can also embed plots, for example:
+
+```{r}
+require("jsonlite")
+require("RCurl")
+# Loads median, mean, and population data into Zip Code dataframe
+zip_code <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from MedianZIP"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
+
+zip_code$MEAN <- as.numeric(levels(zip_code$MEAN))[zip_code$MEAN]
+summary(zip_code)
+head(zip_code)
+```
+
+### Zip Code data set Extract, Transform, Load (ETL) script
+Here is the script we used to extract, transform, and load the zip code dataset into Oracle:
+```
+#Before running this R file make sure you set you working directory to where the CSV file located.
+
+file_path <- "MedianZIP-3-2.csv"
+
+df <- read.csv(file_path, stringsAsFactors = FALSE)
+
+# Replace "." (i.e., period) with "_" in the column names.
+names(df) <- gsub("\\.+", "_", names(df))
+
+str(df) # Uncomment this and  run just the lines to here to get column types to use for getting the list of measures.
+
+
+measures <- c("Median", "Mean", "Pop")
+
+# Get rid of special characters in each column.
+# Google ASCII Table to understand the following:
+for(n in names(df)) {
+  df[n] <- data.frame(lapply(df[n], gsub, pattern="[^ -~]",replacement= ""))
+}
+
+dimensions <- setdiff(names(df), measures)
+#dimensions
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    # Get rid of " and ' in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="[\"']",replacement= ""))
+    # Change & to and in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="&",replacement= " and "))
+    # Change : to ; in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern=":",replacement= ";"))
+  }
+}
+
+
+# Get rid of all characters in measures except for numbers, the - sign, and period.dimensions
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    df[m] <- data.frame(lapply(df[m], gsub, pattern="[^--.0-9]",replacement= ""))
+  }
+}
+
+df$Median <- as.numeric(levels(df$Median))[df$Median]
+df$Mean <- as.numeric(levels(df$Mean))[df$Mean]
+df$Pop <- as.numeric(levels(df$Pop))[df$Pop]
+
+write.csv(df, paste(gsub(".csv", "", file_path), ".reformatted.csv", sep=""), row.names=FALSE, na = "")
+
+tableName <- gsub(" +", "_", gsub("[^A-z, 0-9, ]", "", gsub(".csv", "", file_path)))
+sql <- paste("CREATE TABLE", tableName, "(\n-- Change table_name to the table name you want.\n")
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    sql <- paste(sql, paste(d, "varchar2(4000),\n"))
+  }
+}
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    if(m != tail(measures, n=1)) sql <- paste(sql, paste(m, "number(38,4),\n"))
+    else sql <- paste(sql, paste(m, "number(38,4)\n"))
+  }
+}
+sql <- paste(sql, ");")
+cat(sql)
+```
+
+### A detailed explanation of each column in the Median Zip code data set: 
+* ZIP - US Postal Zip code
+* MEDIAN - Median salary of each zip code
+* MEAN - Mean salary of each zip code
+* POP - Population of each zip code
+
+## Fastfood Sales rank dataset
+For this data set, we created it by ownself called Fastfood_sales_rank which contains Average revenue per Fast Food franchise in the US in 2010. The numbers came from [this website.](https://www.qsrmagazine.com/reports/top-50-sorted-rank)
+
+```{r}
+require("jsonlite")
+require("RCurl")
+# Loads the data from Total Car Sales table into CAR_Sale dataframe
+# Change the USER and PASS below to be your UTEid
+fast_food_sale <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select RESTAURANT, SALES from FASTFOOD_SALES_RANK"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
+summary(fast_food_sale)
+```
+
+### Fastfood Sales rank data set Extract, Transform, Load (ETL) script
+Here is the script we used to extract, transform, and load the zip code dataset into Oracle:
+```
+#Before running this R file make sure you set you working directory to where the CSV file located.
+
+file_path <- "Fastfood_sales_rank.csv"
+
+df <- read.csv(file_path, stringsAsFactors = FALSE)
+
+# Replace "." (i.e., period) with "_" in the column names.
+names(df) <- gsub("\\.+", "_", names(df))
+
+str(df) # Uncomment this and  run just the lines to here to get column types to use for getting the list of measures.
+
+# Generate List of Measures
+measures <- c("Sales")
+
+# Get rid of special characters in each column.
+# Google ASCII Table to understand the following:
+for(n in names(df)) {
+  df[n] <- data.frame(lapply(df[n], gsub, pattern="[^ -~]",replacement= ""))
+}
+
+dimensions <- setdiff(names(df), measures)
+
+#dimensions
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    # Get rid of " and ' in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="[\"']",replacement= ""))
+    # Change & to and in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern="&",replacement= " and "))
+    # Change : to ; in dimensions.
+    df[d] <- data.frame(lapply(df[d], gsub, pattern=":",replacement= ";"))
+  }
+}
+
+
+# Get rid of all characters in measures except for numbers, the - sign, and period.dimensions
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    df[m] <- data.frame(lapply(df[m], gsub, pattern="[^--.0-9]",replacement= ""))
+  }
+}
+
+write.csv(df, paste(gsub(".csv", "", file_path), ".reformatted.csv", sep=""), row.names=FALSE, na = "")
+
+tableName <- gsub(" +", "_", gsub("[^A-z, 0-9, ]", "", gsub(".csv", "", file_path)))
+sql <- paste("CREATE TABLE", tableName, "(\n-- Change table_name to the table name you want.\n")
+if( length(measures) > 1 || ! is.na(dimensions)) {
+  for(d in dimensions) {
+    sql <- paste(sql, paste(d, "varchar2(4000),\n"))
+  }
+}
+if( length(measures) > 1 || ! is.na(measures)) {
+  for(m in measures) {
+    if(m != tail(measures, n=1)) sql <- paste(sql, paste(m, "number(38,4),\n"))
+    else sql <- paste(sql, paste(m, "number(38,4)\n"))
+  }
+}
+sql <- paste(sql, ");")
+cat(sql)
+```
+
+### A detailed explanation of each column in the Fastfood Sales rank data set: 
+* RESTAURANT- Restaurant names
+* SALES - Average sales number for each restaurant franchise
+
+## Session Info
+This is how Rstudio is set up in order to execute the experiment and produce these results:
+```{r}
+sessionInfo()
+```
+
+### Plot 1:
+
+### Plot 1:   in Tableau
+
+### Plot 2:
+
+### Plot 2:   in Tableau
+
+### Plot 3: Scatter plot of relationship of zip code population and # of fast food restaurants
+
+``` {r fig.width = 9, fid.height = 9}
+source("../02 R SQL/Finalproject_plot3.R", echo = TRUE)
+```
+
+This plot was created using a **INNER_JOIN** to see whether there exists the ability to predict the number of fast food restaruants in a zip code given its population. Before creating this plot, plot 2 confirmed for us that the more populated zip codes had much higher total fast food reastuarant locations. As such, we hypothesized that there was a positive trend between those two variables because one could reason that the more people there are, the more restaruants there would be to serve all of those people.
+
+However, upon adding the trend line, the plot tells a different story and completely surprised us. When a zip code has more than roughly 80,000 people living within it, the number of fast food restaurant locations not only levels off, but the trend actually suggests that the number of locations actually decreases, which is not what we orignally hypothesized.
+
+###Plot 3: Scatter plot of relationship of zip code population and # of fast food restaurants in Tableau
+
+### Plot 4:
+
+### Plot 4:   in Tableau
+
+### Plot 5:
+
+### Plot 5:   in Tableau
+
+### Plot 6: Bar chart that looks at the estimated sales revenue of each restaurant by state
+
+``` {r fig.width = 9, fid.height = 9}
+source("../02 R SQL/Bar_chart.R", echo = TRUE)
+```
+This plot we created to look at totall sales for each brand of restaurant in every state. From the first plot with the KPI cross tab, we know that McDonalds play a dominate role in almost every state, but we are curious how each state's McDonalds performance contributing the total sales of McDonalds in whoe United States. In addition, when we created the plot in Tableau, we added a KPI to look at the difference between the sales of state and average sales of United States for each restaurant.
+
+In our plot, we add the average line to show the average sales of United States for each restaurant and red numbers represents the value of the difference between the sales of each state and average sales of United States. Furthermore, we also format the size of sales value to indicate the comparative sales between each states. This means the more sale the state has, the larger size the value is.
+
+### Plot 6:   in Tableau
