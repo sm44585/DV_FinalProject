@@ -10,9 +10,8 @@ dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Market Share Crosstab", tabName = "mktShare_Crosstab", icon = icon("th")),
-      menuItem("Crosstab PV4", tabName = "PV4_Crosstab", icon = icon("th")),
       menuItem("Bar Chart", tabName = "Bar_Chart", icon = icon("bar-chart")),
-      menuItem("Scatterplot", tabName = "Scatterplot", icon = icon("th")),
+      menuItem("Scatterplot", tabName = "Boxplot", icon = icon("th")),
       menuItem("Refresh All Plots and Data", tabName = "Refresh", icon = icon("database"))
     )
   ),
@@ -34,6 +33,7 @@ dashboardPage(
               actionButton("Market_Share", "Generate Market Share Crosstab Plot"),
               plotOutput("crosstabPlot", width="100%", height=800)
       ),
+    #bar chart tab  
     tabItem(tabName = "Bar_Chart",
             checkboxGroupInput(inputId = "RESTAURANT",
                                 label ="Fast Food Restaurants:",
@@ -46,37 +46,29 @@ dashboardPage(
             #action button to generate bar chart plot
             actionButton("BarPlot", "Generate Bar Plot"),
             plotOutput("barchartPlot", width="100%", height=1200)
-            )
+            ),
+    #Boxplot tab        
+    tabItem(tabName = "Boxplot",
+            checkboxGroupInput(inputId = "RESTAURANT",
+                               label ="Fast Food Restaurants:",
+                               choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "McDonalds", inline = TRUE
+            ),
+            checkboxGroupInput(inputId = "STATE",
+                               label ="States:",
+                               choices = c("All", "AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"), selected = "All", inline = TRUE
+            ),
             
-#     tabItem(tabName = "Scatterplot",
-#             p("Note: if beginning year is greater than end year, the chart defaults to displaying all model years."),
-#             #data range slider for each year
-#             sliderInput("BEG_YEAR", 
-#                         "Pick a beginning year of model year:", 
-#                         min = 1985,
-#                         max = 2016, 
-#                         value = 1985,
-#                         step = 1,
-#                         sep = ""),
-#             sliderInput("END_YEAR", 
-#                         "Pick an end year of model year:", 
-#                         min = 1985,
-#                         max = 2016, 
-#                         value = 2016,
-#                         step = 1,
-#                         sep = ""),
-#             
-#             actionButton("ScatterPlot", "Generate Scatter Plot"),
-#             plotOutput("ScatterPlot")
-#             ),
-#     tabItem(tabName = "Refresh",
-#             #action button to generate plots
-#             br(),br(),
-#             p("If you want to change inputs for multiple charts but don't want to push each button to update the chart, click the button below to refresh all of the plots at once."),
-#             actionButton("refreshAll", "Refresh All Plots"),
-#             br(),br(),
-#             p("If you want to refresh the data from Oracle, click the button below"),
-#             actionButton("refreshData", "Refresh the Data")
-#     )
+            actionButton("ScatterPlot", "Generate Scatter Plot"),
+            plotOutput("BoxPlot")
+            ),
+    tabItem(tabName = "Refresh",
+            #action button to generate plots
+            br(),br(),
+            p("If you want to change inputs for multiple charts but don't want to push each button to update the chart, click the button below to refresh all of the plots at once."),
+            actionButton("refreshAll", "Refresh All Plots"),
+            br(),br(),
+            p("If you want to refresh the data from Oracle, click the button below"),
+            actionButton("refreshData", "Refresh the Data")
+    )
     )
 ))

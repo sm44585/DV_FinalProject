@@ -4,14 +4,15 @@ require(RCurl)
 require(ggplot2)
 require(dplyr)
 require(reshape2)
-require(shiny)
+require(shiny) 
+require(scales)
 
 shinyServer(function(input, output) {
   #Code to generate fast food locations data frame
   fast_food <- eventReactive(input$refreshData, {
     fast_food <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from FASTFOODMAPS_LOCATIONS_2007"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
   }, ignoreNULL = FALSE)
-  
+
   #Code to generate the fast food sales locations data frame
   fast_food_sales <- eventReactive(input$refreshData, {
     fast_food_sales <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select RESTAURANT, SALES from FASTFOOD_SALES_RANK"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
@@ -20,7 +21,6 @@ shinyServer(function(input, output) {
   #Code to generate the zip code data frame
   zip_code <- eventReactive(input$refreshData, {
     zip_code <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from MedianZIP"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
-    zip_code$MEAN <- as.numeric(levels(zip_code$MEAN))[zip_code$MEAN]
   }, ignoreNULL = FALSE)
   
   #Code that generates reactive restaurant filter for the bar chart.
@@ -106,8 +106,8 @@ shinyServer(function(input, output) {
       plot <- ggplot() + 
         coord_cartesian() + 
         scale_x_discrete() +
-        scale_y_continuous() +
-        facet_wrap(~RESTAURANT, ncol= 2) +
+        scale_y_continuous(labels = dollar) +
+        facet_wrap(~RESTAURANT) +
         labs(title='Total sales of every fastfood restaurant in every state ') +
         labs(x=paste("State"), y=paste("Sales")) +
         layer(data=bar_chart, 
@@ -115,11 +115,11 @@ shinyServer(function(input, output) {
               stat="identity", 
               stat_params=list(), 
               geom="bar",
-              geom_params=list(colour="blue", fill="white"), 
+              geom_params=list(fill="steelblue"), 
               position=position_dodge()
-        ) + coord_flip() +
+        )+ coord_flip()+  
         layer(data=bar_chart, 
-              mapping=aes(x=STATE, y=value.x, label=round(value.x, 2)), 
+              mapping=aes(x=STATE, y=value.x, label=round(value.x,2),size=value.x),
               stat="identity", 
               stat_params=list(), 
               geom="text",
@@ -129,36 +129,50 @@ shinyServer(function(input, output) {
         layer(data=bar_chart, 
               mapping=aes(yintercept = value.y), 
               geom="hline",
+              linetype="dashed",
+              size=2,
               geom_params=list(colour="red")
         )+
         layer(data=bar_chart, 
-              mapping=aes(x=STATE, y=value.x, label=round(Diff_To_Avg, 2)), 
+              mapping=aes(x=STATE, y=value.x, label=round(Diff_To_Avg)), 
               stat="identity", 
               stat_params=list(), 
               geom="text",
-              geom_params=list(colour="black", hjust=-3), 
+              geom_params=list(colour="red", hjust=-2), 
               position=position_identity()
         )
     return(plot)
   })
-#   
-#   #Code to generate the scatter plot
-#   output$ScatterPlot <- renderPlot({
-#     scatterplot <- vehicles() %>% select(COMB08, YEAR) %>% subset(YEAR %in% year_range()) %>% transform(YEAR = as.Date(as.character(YEAR), "%Y"))
-#     plot <- ggplot() +
-#       coord_cartesian() + 
-#       scale_x_date() +
-#       scale_y_continuous() +
-#       labs(title="Combined MPG of every model year") +
-#       labs(x="Year", y="Combined MPG") +
-#       layer(data=scatterplot , 
-#             mapping=aes(x=YEAR, y=COMB08),
-#             stat="identity",
-#             stat_params=list(), 
-#             geom="point",
-#             geom_params=list(), 
-#             position=position_identity()
-#       )
-#     return(plot)
-#   })
+  
+  #Code to generate the scatter plot
+  output$BoxPlot <- renderPlot({
+    #boxplot <- dplyr::left_join(fast_food(), fast_food_sales(), by="RESTAURANT", copy = TRUE)
+    boxplot <- dplyr::left_join(fast_food(), zip_code(), by="ZIP")
+    #colnames(boxplot)[5] <- "ZIP"
+    #boxplot <- dplyr::left_join(boxplot, zip_code(), by = "ZIP", copy = TRUE)
+    #boxplot <- boxplot %>% subset(RESTAURANT %in% filter_restaurant()) %>% subset(STATE %in% filter_state()) 
+    plot <- ggplot() +
+      coord_cartesian() + 
+      scale_x_discrete() +
+      scale_y_continuous() +
+      labs(title="Combined MPG of every model year") +
+      labs(x="Year", y="Combined MPG") +
+      layer(data=boxplot, 
+            mapping=aes(x=RESTAURANT, y=MEDIAN),
+            stat="identity",
+            stat_params=list(), 
+            geom="point",
+            geom_params=list(), 
+            position=position_identity()
+      )+
+      layer(data = boxplot,
+            mapping=aes(x=RESTAURANT, y=MEDIAN),
+            stat="boxplot",
+            stat_params=list(),
+            geom="boxplot",
+            geom_params=list(color="black",fill="red", alpha=.4),
+            posiion=position_identity()
+      )
+    return(plot)
+  })
 })

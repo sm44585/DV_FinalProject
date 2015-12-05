@@ -10,7 +10,7 @@ names(df) <- gsub("\\.+", "_", names(df))
 str(df) # Uncomment this and  run just the lines to here to get column types to use for getting the list of measures.
 
 
-measures <- c("Median", "Mean", "Pop")
+measures <- c("Zip", "Median", "Mean", "Pop")
 
 # Get rid of special characters in each column.
 # Google ASCII Table to understand the following:
