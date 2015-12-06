@@ -45,21 +45,21 @@ dashboardPage(
             ),
             #action button to generate bar chart plot
             actionButton("BarPlot", "Generate Bar Plot"),
-            plotOutput("barchartPlot", width="100%", height=1200)
+            plotOutput("barchartPlot", width="auto", height=1200)
             ),
     #Boxplot tab        
     tabItem(tabName = "Boxplot",
-            checkboxGroupInput(inputId = "RESTAURANT",
+            checkboxGroupInput(inputId = "BOX_RESTAURANT",
                                label ="Fast Food Restaurants:",
-                               choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "McDonalds", inline = TRUE
+                               choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "All", inline = TRUE
             ),
-            checkboxGroupInput(inputId = "STATE",
+            checkboxGroupInput(inputId = "BOX_STATE",
                                label ="States:",
                                choices = c("All", "AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"), selected = "All", inline = TRUE
             ),
-            
-            actionButton("ScatterPlot", "Generate Scatter Plot"),
-            plotOutput("BoxPlot")
+            #action button to generate box plot
+            actionButton("BoxPlot", "Generate Box Plot"),
+            plotOutput("BoxPlot", width="100%", height=800)
             ),
     tabItem(tabName = "Refresh",
             #action button to generate plots

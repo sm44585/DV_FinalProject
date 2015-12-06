@@ -8,6 +8,8 @@ require(shiny)
 require(scales)
 
 shinyServer(function(input, output) {
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Reactive Dataframes~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
   #Code to generate fast food locations data frame
   fast_food <- eventReactive(input$refreshData, {
     fast_food <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from FASTFOODMAPS_LOCATIONS_2007"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
@@ -22,6 +24,12 @@ shinyServer(function(input, output) {
   zip_code <- eventReactive(input$refreshData, {
     zip_code <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select * from MedianZIP"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_cz4795', PASS='orcl_cz4795', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
   }, ignoreNULL = FALSE)
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Reactive Filters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  #Code that generates reactive KPI inputs for the Market Share crosstab
+  KPI_LOW <- eventReactive(c(input$refreshAll,  input$Market_Share), {KPI_LOW = input$mktShare_KPILow }, ignoreNULL = FALSE)   
+  KPI_HIGH <- eventReactive(c(input$refreshAll, input$Market_Share), {KPI_HIGH = input$mktShare_KPIHigh }, ignoreNULL = FALSE)
   
   #Code that generates reactive restaurant filter for the bar chart.
   filter_restaurant <- eventReactive(c(input$refreshAll, input$BarPlot), {
@@ -42,20 +50,28 @@ shinyServer(function(input, output) {
       filter_state = input$STATE
     }
   }, ignoreNULL = FALSE)
-#   
-#   #Code that generate reactive year selector for the scatter plot.
-#   year_range <- eventReactive(c(input$refreshAll, input$ScatterPlot), {
-#     if (input$BEG_YEAR <= input$END_YEAR){
-#       year_range = input$BEG_YEAR:input$END_YEAR
-#     }
-#     else {
-#       year_range = 1985:2016
-#     }
-#   }, ignoreNULL = FALSE)
+
+  #Code that generates reactive restaurant filter for the boxplot.
+  filter_restaurant_boxplot <- eventReactive(c(input$refreshAll, input$BoxPlot), {
+    if (input$BOX_RESTAURANT == "All"){
+      filter_restaurant_boxplot = c("McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC")
+    }
+    else {
+      filter_restaurant_boxplot = input$BOX_RESTAURANT
+    }
+  }, ignoreNULL = FALSE)
   
-  #Code that generates reactive KPI inputs for the Market Share crosstab
-  KPI_LOW <- eventReactive(c(input$refreshAll,  input$Market_Share), {KPI_LOW = input$mktShare_KPILow }, ignoreNULL = FALSE)   
-  KPI_HIGH <- eventReactive(c(input$refreshAll, input$Market_Share), {KPI_HIGH = input$mktShare_KPIHigh }, ignoreNULL = FALSE)
+  #Code that generates reactive state filter for the boxplot.
+  filter_state_boxplot <- eventReactive(c(input$refreshAll, input$BoxPlot), {
+    if (input$BOX_STATE == "All"){
+      filter_state_boxplot = c("AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY")
+    }
+    else {
+      filter_state_boxplot = input$BOX_STATE
+    }
+  }, ignoreNULL = FALSE)
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Plot Outputs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   #Code to generate PV2 Crosstab plot
   output$crosstabPlot <- renderPlot({
@@ -119,11 +135,11 @@ shinyServer(function(input, output) {
               position=position_dodge()
         )+ coord_flip()+  
         layer(data=bar_chart, 
-              mapping=aes(x=STATE, y=value.x, label=round(value.x,2),size=value.x),
+              mapping=aes(x=STATE, y=value.x, label=round(value.x,2)),
               stat="identity", 
               stat_params=list(), 
               geom="text",
-              geom_params=list(colour="black", hjust=0), 
+              geom_params=list(colour="black", hjust=-4), 
               position=position_identity()
         )+
         layer(data=bar_chart, 
@@ -144,19 +160,16 @@ shinyServer(function(input, output) {
     return(plot)
   })
   
-  #Code to generate the scatter plot
+  #Code to generate the boxplot
   output$BoxPlot <- renderPlot({
-    #boxplot <- dplyr::left_join(fast_food(), fast_food_sales(), by="RESTAURANT", copy = TRUE)
     boxplot <- dplyr::left_join(fast_food(), zip_code(), by="ZIP")
-    #colnames(boxplot)[5] <- "ZIP"
-    #boxplot <- dplyr::left_join(boxplot, zip_code(), by = "ZIP", copy = TRUE)
-    #boxplot <- boxplot %>% subset(RESTAURANT %in% filter_restaurant()) %>% subset(STATE %in% filter_state()) 
+    boxplot <- boxplot %>% subset(RESTAURANT %in% filter_restaurant_boxplot()) %>% subset(STATE %in% filter_state_boxplot()) 
     plot <- ggplot() +
       coord_cartesian() + 
       scale_x_discrete() +
-      scale_y_continuous() +
-      labs(title="Combined MPG of every model year") +
-      labs(x="Year", y="Combined MPG") +
+      scale_y_continuous(labels = dollar) +
+      labs(title="Boxplot of Median Salary by Zip Code") +
+      labs(x="Restaurant", y="Median Salary") +
       layer(data=boxplot, 
             mapping=aes(x=RESTAURANT, y=MEDIAN),
             stat="identity",
@@ -170,6 +183,14 @@ shinyServer(function(input, output) {
             stat="boxplot",
             stat_params=list(),
             geom="boxplot",
+            geom_params=list(color="black",fill="red", alpha=.4),
+            posiion=position_identity()
+      ) +
+      layer(data = boxplot,
+            mapping=aes(x=RESTAURANT, y=MEDIAN),
+            stat="boxplot",
+            stat_params=list(),
+            geom="errorbar",
             geom_params=list(color="black",fill="red", alpha=.4),
             posiion=position_identity()
       )
