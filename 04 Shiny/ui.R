@@ -36,6 +36,8 @@ dashboardPage(
       ),
     #bar chart tab  
     tabItem(tabName = "Bar_Chart",
+            br(),br(),
+            p("The red numbers indicate the difference from the average. The black numbers indicate the total sales revenue for that particular state."),
             checkboxGroupInput(inputId = "RESTAURANT",
                                 label ="Fast Food Restaurants:",
                                 choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "McDonalds", inline = TRUE
@@ -60,7 +62,7 @@ dashboardPage(
             ),
             #action button to generate box plot
             actionButton("BoxPlot", "Generate Box Plot"),
-            plotOutput("BoxPlot", width="100%", height=800)
+            plotOutput("BoxPlot", width="100%", height=600)
             ),
     tabItem(tabName = "Map",
             checkboxGroupInput(inputId = "MAP_RESTAURANT",
