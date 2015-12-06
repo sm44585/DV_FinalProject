@@ -17,11 +17,12 @@ WINDOW_AVG=aggregate(bar_chart[, 4], list(RESTAURANT=bar_chart$RESTAURANT), mean
 bar_chart<-dplyr::right_join(bar_chart, WINDOW_AVG, by="RESTAURANT")
 
 bar_chart<-bar_chart %>% select (STATE,RESTAURANT,variable,value.x,value.y)%>%mutate(Diff_To_Avg = value.x - value.y)
+options(scipen = 999)
 #Plot Function to generate bar chart with reference line and values
 ggplot() + 
   coord_cartesian() + 
   scale_x_discrete() +
-  scale_y_continuous() +
+  scale_y_continuous(labels = dollar) +
   facet_wrap(~RESTAURANT) +
   labs(title='Total sales of every fastfood restaurant in every state ') +
   labs(x=paste("State"), y=paste("Sales")) +

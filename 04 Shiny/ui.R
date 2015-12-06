@@ -11,7 +11,8 @@ dashboardPage(
     sidebarMenu(
       menuItem("Market Share Crosstab", tabName = "mktShare_Crosstab", icon = icon("th")),
       menuItem("Bar Chart", tabName = "Bar_Chart", icon = icon("bar-chart")),
-      menuItem("Scatterplot", tabName = "Boxplot", icon = icon("th")),
+      menuItem("Boxplot", tabName = "Boxplot", icon = icon("th")),
+      menuItem("Map", tabName = "Map", icon = icon("map-marker")),
       menuItem("Refresh All Plots and Data", tabName = "Refresh", icon = icon("database"))
     )
   ),
@@ -61,6 +62,19 @@ dashboardPage(
             actionButton("BoxPlot", "Generate Box Plot"),
             plotOutput("BoxPlot", width="100%", height=800)
             ),
+    tabItem(tabName = "Map",
+            checkboxGroupInput(inputId = "MAP_RESTAURANT",
+                               label ="Fast Food Restaurants:",
+                               choices = c("All", "McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC"), selected = "All", inline = TRUE
+            ),
+            checkboxGroupInput(inputId = "MAP_STATE",
+                               label ="States:",
+                               choices = c("All", "AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"), selected = "All", inline = TRUE
+            ),
+            #action button to generate map
+            actionButton("Map", "Generate map"),
+            leafletOutput("Map", width="100%", height = 600)
+    ),
     tabItem(tabName = "Refresh",
             #action button to generate plots
             br(),br(),

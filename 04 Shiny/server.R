@@ -6,6 +6,7 @@ require(dplyr)
 require(reshape2)
 require(shiny) 
 require(scales)
+require(leaflet)
 
 shinyServer(function(input, output) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Reactive Dataframes~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +69,26 @@ shinyServer(function(input, output) {
     }
     else {
       filter_state_boxplot = input$BOX_STATE
+    }
+  }, ignoreNULL = FALSE)
+  
+  #Code that generates reactive restaurant filter for the map
+  filter_restaurant_map <- eventReactive(c(input$refreshAll, input$Map), {
+    if (input$MAP_RESTAURANT == "All"){
+      filter_restaurant_map = c("McDonalds", "Burger King","Pizza Hut","Taco Bell","Wendys","Jack in the Box", "Hardees", "Carls Jr", "In-N-Out","KFC")
+    }
+    else {
+      filter_restaurant_map = input$MAP_RESTAURANT
+    }
+  }, ignoreNULL = FALSE)
+  
+  #Code that generates reactive state filter for the map
+  filter_state_map <- eventReactive(c(input$refreshAll, input$Map), {
+    if (input$MAP_STATE == "All"){
+      filter_state_map = c("AK", "AL","AR","AZ","CA","CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY")
+    }
+    else {
+      filter_state_map = input$MAP_STATE
     }
   }, ignoreNULL = FALSE)
   
@@ -195,5 +216,18 @@ shinyServer(function(input, output) {
             posiion=position_identity()
       )
     return(plot)
+  })
+  
+  #Code to generate the map
+  output$Map <- renderLeaflet({
+    locations <- fast_food() %>% subset(RESTAURANT %in% filter_restaurant_map()) %>% subset(STATE %in% filter_state_map())
+    content <- paste(sep = "<br/>",
+                     locations$RESTAURANT,
+                     locations$ADDRESS,
+                     paste(sep = " ", locations$CITY, locations$STATE, locations$ZIP
+                     ))
+    leaflet(data = locations) %>% addTiles() %>% 
+      addMarkers( ~LONGI, ~LAT, popup = ~content, clusterOptions = markerClusterOptions()
+      )
   })
 })
