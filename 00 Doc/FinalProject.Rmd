@@ -301,7 +301,7 @@ image: ![](../03 Tableau Workbooks/boxplot_1.png)
 
 
 ### Step 1 Interesting Plot: Boxplot in R and Shiny App
-We took the boxplot one step further by adding Restaurant to columns. That is when we found something interesting: all but two fast food establishments had boxplots showing pretty much the same median salary for the ZIP codes they had franchises in, except for In-N-Out and Hardee's. In-N-Out had an median salary that was alomst $20,000 above the others, while Hardee's had an meadian salary that was about $5,000 less than the others. You can find this plot in our Shiny App under the "Boxplot" tab. Here is the plot in Tableau:
+We took the boxplot one step further by adding Restaurant to columns. That is when we found something interesting: all but two fast food establishments had boxplots showing pretty much the same median salary for the ZIP codes they had franchises in, except for In-N-Out and Hardee's. In-N-Out had an median salary that was alomst $10,000 above the others, while Hardee's had an meadian salary that was about $5,000 less than the others. You can find this plot in our Shiny App under the "Boxplot" tab. Here is the plot in Tableau:
 
 image: ![](../03 Tableau Workbooks/boxplot_interesting.png)
 
