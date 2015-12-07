@@ -14,7 +14,7 @@ sessionInfo()
 ```
 
 ##Shiny Application
-For this project, we also built and deployed a [Shiny Application]() that showcases three of the most interesting plots we saw when analyzing these datasets.
+For this project, we also built and deployed a [Shiny Application](https://smuncey.shinyapps.io/FinalProject) that showcases three of the most interesting plots we saw when analyzing these datasets.
 
 ## Fast Food location dataset
 The first dataset comes from [Fast Food Maps](http://www.fastfoodmaps.com/data.html), a website that was created to show all restaruant locations of the top ten fast food chains in America. The data is from the summer of 2007. Here is a summary of that dataset:
@@ -514,3 +514,26 @@ ggplot() +
 
 ```
 
+### Bonus Plot - Map
+This map plot was created because we had location data on more than 50,000 fast food restaurant locations. Maps in R are not as flexible as they are in Tableau; thus, we were only able to generate this map that plots the location of each restaurant. It is interesting from the perspective that you can visually see where the majority of restaurants are located or where a particular brand holds a lot of fast food locations. Here is the plot in Tableau:
+
+![](../03 Tableau Workbooks/bonus_map.png)
+
+The map will not generate in a r markdown html document. To view the plot, simply look at the Bonus_Map.R file under the 02 R SQL folder. Here is the code that generated that plot:
+
+```
+require(leaflet)
+
+locations <- fast_food %>% subset(RESTAURANT %in% c("Burger King", "McDonalds"))
+content <- paste(sep = "<br/>",
+                 locations$RESTAURANT,
+                 locations$ADDRESS,
+                 paste(sep = " ", locations$CITY, locations$STATE, locations$ZIP
+))
+leaflet(data = locations) %>% addTiles() %>% 
+  addMarkers( ~LONGI, ~LAT, popup = ~content ,
+  clusterOptions = markerClusterOptions()
+)
+
+
+```
